@@ -19,6 +19,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'gradle'
 
       - name: Build .mpp
         env:
@@ -28,10 +29,19 @@ jobs:
           chmod +x gradlew
           ./gradlew build -Pgpr.user=${{ github.actor }} -Pgpr.key=${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create Release
+      - name: Prepare Clean .mpp Output
+        run: |
+          mkdir -p release-out
+          find . -path "*/build/libs/*.mpp" ! -name "*-javadoc*" ! -name "*-sources*" -exec cp {} release-out/ \;
+          ls -la release-out/
+
+      - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
-          name: "Telegram Patches v1.0.${{ github.run_number }}"
+          name: "TelegramEX v1.0.${{ github.run_number }}"
           prerelease: false
-          files: "**/build/libs/*.mpp"
+          make_latest: "true"
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: "release-out/*.mpp"
