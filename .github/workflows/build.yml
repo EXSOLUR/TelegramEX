@@ -1,4 +1,4 @@
-name: Build Morphe Patches
+name: Build and Release Morphe Patches
 
 on:
   workflow_dispatch:
@@ -6,8 +6,10 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -22,9 +24,10 @@ jobs:
           chmod +x gradlew
           ./gradlew build
 
-      - name: Upload .mpp Artifact
-        uses: actions/upload-artifact@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: morphe-patches
-          path: "**/build/libs/*.mpp"
-          
+          tag_name: v1.0.${{ github.run_number }}
+          name: "Telegram Patches v1.0.${{ github.run_number }}"
+          prerelease: true # Normal sürüm (Latest) için false yap
+          files: "**/build/libs/*.mpp"
