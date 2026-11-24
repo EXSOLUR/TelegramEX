@@ -14,6 +14,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Unpack TelegramEX ZIP & Read Version
+        id: ver
+        run: |
+          if [ -f "TelegramEX-Patches.zip" ]; then
+            rm -f patches/src/main/kotlin/app/template/patches/telegram/HideChatsPatch.kt
+            rm -f extensions/extension/src/main/java/app/template/extension/TelegramHideHelper.java
+            unzip -o TelegramEX-Patches.zip
+          fi
+          if [ -f "version.txt" ]; then
+            APP_VER=$(tr -d '[:space:]' < version.txt)
+          else
+            APP_VER="0.1"
+          fi
+          echo "version=$APP_VER" >> $GITHUB_OUTPUT
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -27,7 +42,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x gradlew
-          ./gradlew build -Pversion="1.0.${{ github.run_number }}" -Pgpr.user=${{ github.actor }} -Pgpr.key=${{ secrets.GITHUB_TOKEN }}
+          ./gradlew build -Pversion="${{ steps.ver.outputs.version }}" -Pgpr.user=${{ github.actor }} -Pgpr.key=${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare Clean .mpp Output
         run: |
@@ -38,10 +53,9 @@ jobs:
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: "TelegramEX v1.0.${{ github.run_number }}"
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: "TelegramEX v${{ steps.ver.outputs.version }}"
           prerelease: false
           make_latest: "true"
-          generate_release_notes: true
           fail_on_unmatched_files: true
           files: "release-out/*.mpp"
