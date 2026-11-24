@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: read
     steps:
       - uses: actions/checkout@v4
 
@@ -20,14 +21,17 @@ jobs:
           distribution: 'temurin'
 
       - name: Build .mpp
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x gradlew
-          ./gradlew build
+          ./gradlew build -Pgpr.user=${{ github.actor }} -Pgpr.key=${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
           name: "Telegram Patches v1.0.${{ github.run_number }}"
-          prerelease: true # Normal sürüm (Latest) için false yap
+          prerelease: false
           files: "**/build/libs/*.mpp"
